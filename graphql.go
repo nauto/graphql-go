@@ -161,7 +161,7 @@ func (s *Schema) exec(ctx context.Context, queryString string, operationName str
 	}
 
 	validationFinish := s.validationTracer.TraceValidation()
-	errs := validation.Validate(s.schema, doc, s.maxDepth)
+	errs := validation.Validate(s.schema, doc, s.maxDepth, variables)
 	validationFinish(errs)
 	if len(errs) != 0 {
 		return &Response{Errors: errs}

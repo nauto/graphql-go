@@ -23,6 +23,8 @@ type fieldInfo struct {
 	parent schema.NamedType
 }
 
+type bindings = map[string]interface{}
+
 type context struct {
 	schema           *schema.Schema
 	doc              *query.Document
@@ -32,6 +34,7 @@ type context struct {
 	fieldMap         map[*query.Field]fieldInfo
 	overlapValidated map[selectionPair]struct{}
 	maxDepth         int
+	variables        bindings
 }
 
 func (c *context) addErr(loc errors.Location, rule string, format string, a ...interface{}) {
@@ -51,7 +54,14 @@ type opContext struct {
 	ops []*query.Operation
 }
 
-func newContext(s *schema.Schema, doc *query.Document, maxDepth int) *context {
+func newContext(s *schema.Schema, doc *query.Document, maxDepth int, varBindings ...bindings) *context {
+	var variables bindings
+	if len(varBindings) == 0 {
+		variables = bindings{}
+	} else {
+		variables = varBindings[0]
+	}
+
 	return &context{
 		schema:           s,
 		doc:              doc,
@@ -60,11 +70,12 @@ func newContext(s *schema.Schema, doc *query.Document, maxDepth int) *context {
 		fieldMap:         make(map[*query.Field]fieldInfo),
 		overlapValidated: make(map[selectionPair]struct{}),
 		maxDepth:         maxDepth,
+		variables:        variables,
 	}
 }
 
-func Validate(s *schema.Schema, doc *query.Document, maxDepth int) []*errors.QueryError {
-	c := newContext(s, doc, maxDepth)
+func Validate(s *schema.Schema, doc *query.Document, maxDepth int, variables ...map[string]interface{}) []*errors.QueryError {
+	c := newContext(s, doc, maxDepth, variables...)
 
 	opNames := make(nameSet)
 	fragUsedBy := make(map[*query.FragmentDecl][]*query.Operation)
@@ -691,6 +702,27 @@ func validateLiteral(c *opContext, l common.Literal) {
 	}
 }
 
+func parseLiteral(value string) common.Literal {
+	lexer := common.NewLexer(value, false)
+	lexer.ConsumeWhitespace()
+	return common.ParseLiteral(lexer, false)
+}
+
+func varBinding(c *opContext, name string) (common.Literal, bool) {
+	if binding, ok := c.variables[name]; ok {
+		if literal, ok := binding.(common.Literal); ok {
+			return literal, true
+		}
+		switch literal := binding.(type) {
+		case string:
+			return parseLiteral(literal), true
+		case []byte:
+			return parseLiteral(string(literal)), true
+		}
+	}
+	return nil, false
+}
+
 func validateValueType(c *opContext, v common.Literal, t common.Type) (bool, string) {
 	if v, ok := v.(*common.Variable); ok {
 		for _, op := range c.ops {
@@ -698,6 +730,11 @@ func validateValueType(c *opContext, v common.Literal, t common.Type) (bool, str
 				t2, err := common.ResolveType(v2.Type, c.schema.Resolve)
 				if _, ok := t2.(*common.NonNull); !ok && v2.Default != nil {
 					t2 = &common.NonNull{OfType: t2}
+				}
+				if err == nil {
+					if binding, ok := varBinding(c, v2.Name.Name); ok {
+						return validateValueType(c, binding, t2)
+					}
 				}
 				if err == nil && !typeCanBeUsedAs(t2, t) {
 					c.addErrMultiLoc([]errors.Location{v2.Loc, v.Loc}, "VariablesInAllowedPosition", "Variable %q of type %q used in position expecting type %q.", "$"+v.Name, t2, t)

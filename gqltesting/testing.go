@@ -49,19 +49,21 @@ func RunTest(t *testing.T, test *Test) {
 	checkErrors(t, test.ExpectedErrors, result.Errors)
 
 	// Verify JSON to avoid red herring errors.
-	got, err := formatJSON(result.Data)
-	if err != nil {
-		t.Fatalf("got: invalid JSON: %s", err)
-	}
-	want, err := formatJSON([]byte(test.ExpectedResult))
-	if err != nil {
-		t.Fatalf("want: invalid JSON: %s", err)
-	}
+	if len(result.Data) != 0 || len(test.ExpectedResult) != 0 {
+		got, err := formatJSON(result.Data)
+		if err != nil {
+			t.Fatalf("got: invalid JSON: %s", err)
+		}
+		want, err := formatJSON([]byte(test.ExpectedResult))
+		if err != nil {
+			t.Fatalf("want: invalid JSON: %s", err)
+		}
 
-	if !bytes.Equal(got, want) {
-		t.Logf("got:  %s", got)
-		t.Logf("want: %s", want)
-		t.Fail()
+		if !bytes.Equal(got, want) {
+			t.Logf("got:  %s", got)
+			t.Logf("want: %s", want)
+			t.Fail()
+		}
 	}
 }
 

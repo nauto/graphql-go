@@ -1,8 +1,6 @@
 package graphql_test
 
 import (
-	//"context"
-	//"errors"
 	"fmt"
 	"testing"
 
@@ -22,7 +20,7 @@ func TestInvalidEnum(t *testing.T) {
 		{
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: `
-			{
+			query {
 				greet(mood: WRONG)
 			}`,
 			ExpectedErrors: []*qerrors.QueryError{{
@@ -34,15 +32,32 @@ func TestInvalidEnum(t *testing.T) {
 		{
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: `
+			query {
+				greet(mood: WRUNG)
+			}`,
+			ExpectedResult: `{ "greet": "Hi, WRUNG!" }`,
+		},
+		{
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
 			query($wrong: Mood!) {
 				greet(mood: $wrong)
 			}`,
 			Variables: map[string]interface{}{ "wrong": "WRONG" },
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Argument \"mood\" has invalid value WRONG.\nExpected type \"Mood\", found WRONG.",
+				Message: "Argument \"mood\" has invalid value $wrong.\nExpected type \"Mood\", found WRONG.",
 				Locations: []qerrors.Location{{Line: 3, Column: 17}},
 				Rule: "ArgumentsOfCorrectType",
 			}},
+		},
+		{
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
+			query($wrong: Mood!) {
+				greet(mood: $wrong)
+			}`,
+			Variables: map[string]interface{}{ "wrong": "WRUNG" },
+			ExpectedResult: `{ "greet": "Hi, WRUNG!" }`,
 		},
 	})
 }
