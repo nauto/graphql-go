@@ -731,12 +731,13 @@ func validateValueType(c *opContext, v common.Literal, t common.Type) (bool, str
 				if _, ok := t2.(*common.NonNull); !ok && v2.Default != nil {
 					t2 = &common.NonNull{OfType: t2}
 				}
-				if err == nil {
-					if binding, ok := varBinding(c, v2.Name.Name); ok {
-						return validateValueType(c, binding, t2)
-					}
+				if err != nil {
+					continue
 				}
-				if err == nil && !typeCanBeUsedAs(t2, t) {
+				if binding, ok := varBinding(c, v2.Name.Name); ok {
+					return validateValueType(c, binding, t2)
+				}
+				if !typeCanBeUsedAs(t2, t) {
 					c.addErrMultiLoc([]errors.Location{v2.Loc, v.Loc}, "VariablesInAllowedPosition", "Variable %q of type %q used in position expecting type %q.", "$"+v.Name, t2, t)
 				}
 			}
