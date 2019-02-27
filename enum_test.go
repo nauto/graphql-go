@@ -34,7 +34,7 @@ func TestInvalidEnum(t *testing.T) {
 	}`
 	gqltesting.RunTests(t, []*gqltesting.Test{
 		{
-			// misspelled scalar enum literal
+			// 1. misspelled scalar enum literal
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: `
 			query {
@@ -47,7 +47,7 @@ func TestInvalidEnum(t *testing.T) {
 			}},
 		},
 		{
-			// correct scalar enum literal
+			// 2. correct scalar enum literal
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: `
 			query {
@@ -56,7 +56,7 @@ func TestInvalidEnum(t *testing.T) {
 			ExpectedResult: `{ "greet": "Hi, WRUNG!" }`,
 		},
 		{
-			// misspelled list-of-enum literal
+			// 3. misspelled list-of-enum literal
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: `
 			query {
@@ -69,7 +69,7 @@ func TestInvalidEnum(t *testing.T) {
 			}},
 		},
 		{
-			// correct list-of-enum literal
+			// 4. correct list-of-enum literal
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: `
 			query {
@@ -78,36 +78,36 @@ func TestInvalidEnum(t *testing.T) {
 			ExpectedResult: `{ "leave": "Bye, WRUNG!" }`,
 		},
 		{
-			// misspelled scalar enum variable
+			// 5. misspelled scalar enum variable
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: varScalar,
 			Variables: map[string]interface{}{ "wrong": "WRONG" },
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Argument \"mood\" has invalid value $wrong.\nExpected type \"Mood\", found WRONG.",
-				Locations: []qerrors.Location{{Line: 3, Column: 15}},
+				Message: "Expected type \"Mood\", found WRONG.",
+				Locations: []qerrors.Location{{Line: 2, Column: 8}, {Line: 3, Column: 15}},
 				Rule: "ArgumentsOfCorrectType",
 			}},
 		},
 		{
-			// correct scalar enum variable
+			// 6. correct scalar enum variable
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: varScalar,
 			Variables: map[string]interface{}{ "wrong": "WRUNG" },
 			ExpectedResult: `{ "greet": "Hi, WRUNG!" }`,
 		},
 		{
-			// misspelled list-of-enum variable
+			// 7. misspelled list-of-enum variable
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: varList,
 			Variables: map[string]interface{}{ "wrong": `[WRONG]` },
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Argument \"moods\" has invalid value $wrong.\nIn element #0: Expected type \"Mood\", found WRONG.",
-				Locations: []qerrors.Location{{Line: 3, Column: 16}},
+				Message: "In element #0: Expected type \"Mood\", found WRONG.",
+				Locations: []qerrors.Location{{Line: 2, Column: 8}, {Line: 3, Column: 16}},
 				Rule: "ArgumentsOfCorrectType",
 			}},
 		},
 		{
-			// correct list-of-enum variable
+			// 8. correct list-of-enum variable
 			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
 			Query: varList,
 			Variables: map[string]interface{}{ "wrong": `[WRUNG]` },

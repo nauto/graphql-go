@@ -735,7 +735,9 @@ func validateValueType(c *opContext, v common.Literal, t common.Type) (bool, str
 					continue
 				}
 				if binding, ok := varBinding(c, v2.Name.Name); ok {
-					return validateValueType(c, binding, t2)
+					if ok, errstr := validateValueType(c, binding, t2); !ok {
+						c.addErrMultiLoc([]errors.Location{v2.Loc, v.Loc}, "ArgumentsOfCorrectType", errstr)
+					}
 				}
 				if !typeCanBeUsedAs(t2, t) {
 					c.addErrMultiLoc([]errors.Location{v2.Loc, v.Loc}, "VariablesInAllowedPosition", "Variable %q of type %q used in position expecting type %q.", "$"+v.Name, t2, t)
