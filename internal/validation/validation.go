@@ -23,8 +23,6 @@ type fieldInfo struct {
 	parent schema.NamedType
 }
 
-type bindings = map[string]interface{}
-
 type context struct {
 	schema           *schema.Schema
 	doc              *query.Document
@@ -34,7 +32,7 @@ type context struct {
 	fieldMap         map[*query.Field]fieldInfo
 	overlapValidated map[selectionPair]struct{}
 	maxDepth         int
-	variables        bindings
+	variables        map[string]interface{}
 }
 
 func (c *context) addErr(loc errors.Location, rule string, format string, a ...interface{}) {
@@ -54,7 +52,7 @@ type opContext struct {
 	ops []*query.Operation
 }
 
-func newContext(s *schema.Schema, doc *query.Document, maxDepth int, variables bindings) *context {
+func newContext(s *schema.Schema, doc *query.Document, maxDepth int, variables map[string]interface{}) *context {
 	return &context{
 		schema:           s,
 		doc:              doc,
@@ -68,14 +66,14 @@ func newContext(s *schema.Schema, doc *query.Document, maxDepth int, variables b
 }
 
 func Validate(s *schema.Schema, doc *query.Document, maxDepth int) []*errors.QueryError {
-	return validate(s, doc, maxDepth, bindings{})
+	return validate(s, doc, maxDepth, nil)
 }
 
-func ValidateWithVariables(s *schema.Schema, doc *query.Document, maxDepth int, variables bindings) []*errors.QueryError {
+func ValidateWithVariables(s *schema.Schema, doc *query.Document, maxDepth int, variables map[string]interface{}) []*errors.QueryError {
 	return validate(s, doc, maxDepth, variables)
 }
 
-func validate(s *schema.Schema, doc *query.Document, maxDepth int, variables bindings) []*errors.QueryError {
+func validate(s *schema.Schema, doc *query.Document, maxDepth int, variables map[string]interface{}) []*errors.QueryError {
 	c := newContext(s, doc, maxDepth, variables)
 
 	opNames := make(nameSet)
