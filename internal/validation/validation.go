@@ -54,14 +54,7 @@ type opContext struct {
 	ops []*query.Operation
 }
 
-func newContext(s *schema.Schema, doc *query.Document, maxDepth int, varBindings ...bindings) *context {
-	var variables bindings
-	if len(varBindings) == 0 {
-		variables = bindings{}
-	} else {
-		variables = varBindings[0]
-	}
-
+func newContext(s *schema.Schema, doc *query.Document, maxDepth int, variables bindings) *context {
 	return &context{
 		schema:           s,
 		doc:              doc,
@@ -74,8 +67,16 @@ func newContext(s *schema.Schema, doc *query.Document, maxDepth int, varBindings
 	}
 }
 
-func Validate(s *schema.Schema, doc *query.Document, maxDepth int, variables ...map[string]interface{}) []*errors.QueryError {
-	c := newContext(s, doc, maxDepth, variables...)
+func Validate(s *schema.Schema, doc *query.Document, maxDepth int) []*errors.QueryError {
+	return validate(s, doc, maxDepth, bindings{})
+}
+
+func ValidateWithVariables(s *schema.Schema, doc *query.Document, maxDepth int, variables bindings) []*errors.QueryError {
+	return validate(s, doc, maxDepth, variables)
+}
+
+func validate(s *schema.Schema, doc *query.Document, maxDepth int, variables bindings) []*errors.QueryError {
+	c := newContext(s, doc, maxDepth, variables)
 
 	opNames := make(nameSet)
 	fragUsedBy := make(map[*query.FragmentDecl][]*query.Operation)
