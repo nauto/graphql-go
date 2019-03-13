@@ -27,6 +27,10 @@ func (self *enumResolver) Grasp(args struct{ None *string }) string {
 	return fmt.Sprintf("None, %s.", *args.None)
 }
 
+func (self *enumResolver) Crash(args struct{ Why string }) string {
+	return fmt.Sprintf("Why, %s!", args.Why)
+}
+
 func TestInvalidEnum(t *testing.T) {
 	varScalar := `
 	query($wrong: Mood!) {
@@ -154,6 +158,25 @@ func TestInvalidEnum(t *testing.T) {
 				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
+		{
+			// 12. empty string literal
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
+			query {
+				crash(why: "")
+			}`,
+			ExpectedResult: `{ "crash": "Why, !" }`,
+		},
+		{
+			// 13. empty string variable
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
+			query($justso: String!) {
+				crash(why: $justso)
+			}`,
+			Variables: map[string]interface{}{"justso": ""},
+			ExpectedResult: `{ "crash": "When, !" }`,
+		},
 	})
 }
 
@@ -174,5 +197,6 @@ const rightSchema = `
 		greet(mood: Mood!): String!
 		leave(moods: [Mood]): String!
 		grasp(none: Nothing): String!
+		crash(why: String!): String!
 	}
 `

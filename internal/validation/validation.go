@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"text/scanner"
+	"unicode"
 
 	"github.com/nauto/graphql-go/errors"
 	"github.com/nauto/graphql-go/internal/common"
@@ -701,10 +702,25 @@ func validateLiteral(c *opContext, l common.Literal) {
 	}
 }
 
+func stringLiteral(value string) common.Literal {
+	return &common.BasicLit{Type: scanner.String, Text: value}
+}
+
 func parseLiteral(value string) common.Literal {
+	if value == "" {
+		return stringLiteral("")
+	}
 	lexer := common.NewLexer(value, false)
-	lexer.ConsumeWhitespace()
-	return common.ParseLiteral(lexer, false)
+	if unicode.IsSpace(lexer.Advance()) {
+		// assuming values of other scalar types don't start with spaces
+		return stringLiteral(value)
+	}
+	rv := common.ParseLiteral(lexer, true)
+	if lexer.Peek() != scanner.EOF {
+		// if it can be parsed as several simple values it is assumed to be a string
+		return stringLiteral(value)
+	}
+	return rv
 }
 
 func varBinding(c *opContext, name string) (rv common.Literal, success bool) {
