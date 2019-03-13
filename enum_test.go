@@ -9,14 +9,14 @@ import (
 	"github.com/nauto/graphql-go/gqltesting"
 )
 
-type enumResolver struct {}
+type enumResolver struct{}
 
-func (self *enumResolver) Greet(args struct { Mood string }) string {
+func (self *enumResolver) Greet(args struct{ Mood string }) string {
 	return fmt.Sprintf("Hi, %s!", args.Mood)
 }
 
-func (self *enumResolver) Leave(args struct { Moods *[]*string }) string {
-	retVal := "Bye";
+func (self *enumResolver) Leave(args struct{ Moods *[]*string }) string {
+	retVal := "Bye"
 	for _, s := range *args.Moods {
 		retVal += ", " + *s
 	}
@@ -41,9 +41,9 @@ func TestInvalidEnum(t *testing.T) {
 				greet(mood: WRONG)
 			}`,
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Argument \"mood\" has invalid value WRONG.\nExpected type \"Mood\", found WRONG.",
+				Message:   "Argument \"mood\" has invalid value WRONG.\nExpected type \"Mood\", found WRONG.",
 				Locations: []qerrors.Location{{Line: 3, Column: 17}},
-				Rule: "ArgumentsOfCorrectType",
+				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
 		{
@@ -63,9 +63,9 @@ func TestInvalidEnum(t *testing.T) {
 				leave(moods: [WRONG])
 			}`,
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Argument \"moods\" has invalid value [WRONG].\nIn element #0: Expected type \"Mood\", found WRONG.",
+				Message:   "Argument \"moods\" has invalid value [WRONG].\nIn element #0: Expected type \"Mood\", found WRONG.",
 				Locations: []qerrors.Location{{Line: 3, Column: 18}},
-				Rule: "ArgumentsOfCorrectType",
+				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
 		{
@@ -79,38 +79,38 @@ func TestInvalidEnum(t *testing.T) {
 		},
 		{
 			// 5. misspelled scalar enum variable
-			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
-			Query: varScalar,
-			Variables: map[string]interface{}{ "wrong": "WRONG" },
+			Schema:    graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query:     varScalar,
+			Variables: map[string]interface{}{"wrong": "WRONG"},
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Expected type \"Mood\", found WRONG.",
+				Message:   "Expected type \"Mood\", found WRONG.",
 				Locations: []qerrors.Location{{Line: 2, Column: 8}, {Line: 3, Column: 15}},
-				Rule: "ArgumentsOfCorrectType",
+				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
 		{
 			// 6. correct scalar enum variable
-			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
-			Query: varScalar,
-			Variables: map[string]interface{}{ "wrong": "WRUNG" },
+			Schema:         graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query:          varScalar,
+			Variables:      map[string]interface{}{"wrong": "WRUNG"},
 			ExpectedResult: `{ "greet": "Hi, WRUNG!" }`,
 		},
 		{
 			// 7. misspelled list-of-enum variable
-			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
-			Query: varList,
-			Variables: map[string]interface{}{ "wrong": `[WRONG]` },
+			Schema:    graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query:     varList,
+			Variables: map[string]interface{}{"wrong": `[WRONG]`},
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "In element #0: Expected type \"Mood\", found WRONG.",
+				Message:   "In element #0: Expected type \"Mood\", found WRONG.",
 				Locations: []qerrors.Location{{Line: 2, Column: 8}, {Line: 3, Column: 16}},
-				Rule: "ArgumentsOfCorrectType",
+				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
 		{
 			// 8. correct list-of-enum variable
-			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
-			Query: varList,
-			Variables: map[string]interface{}{ "wrong": `[WRUNG]` },
+			Schema:         graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query:          varList,
+			Variables:      map[string]interface{}{"wrong": `[WRUNG]`},
 			ExpectedResult: `{ "leave": "Bye, [WRUNG]!" }`,
 		},
 		{
@@ -121,20 +121,20 @@ func TestInvalidEnum(t *testing.T) {
 				greet(mood: WRU)
 			}`,
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Argument \"mood\" has invalid value WRU.\nExpected type \"Mood\", found WRU.",
+				Message:   "Argument \"mood\" has invalid value WRU.\nExpected type \"Mood\", found WRU.",
 				Locations: []qerrors.Location{{Line: 3, Column: 17}},
-				Rule: "ArgumentsOfCorrectType",
+				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
 		{
 			// 10. misspelled again scalar enum variable
-			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
-			Query: varScalar,
-			Variables: map[string]interface{}{ "wrong": "WRU" },
+			Schema:    graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query:     varScalar,
+			Variables: map[string]interface{}{"wrong": "WRU"},
 			ExpectedErrors: []*qerrors.QueryError{{
-				Message: "Expected type \"Mood\", found WRU.",
+				Message:   "Expected type \"Mood\", found WRU.",
 				Locations: []qerrors.Location{{Line: 2, Column: 8}, {Line: 3, Column: 15}},
-				Rule: "ArgumentsOfCorrectType",
+				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
 	})

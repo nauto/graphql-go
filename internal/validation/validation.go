@@ -727,9 +727,9 @@ func varBinding(c *opContext, name string) (rv common.Literal, success bool) {
 		case []byte:
 			return parseLiteral(string(literal)), true
 		case uint8, uint16, uint32, uint64, int8, int16, int32, int64:
-			return &common.BasicLit{ Type: scanner.Int, Text: fmt.Sprintf("%v", literal) }, true
+			return &common.BasicLit{Type: scanner.Int, Text: fmt.Sprintf("%v", literal)}, true
 		case float32, float64:
-			return &common.BasicLit{ Type: scanner.Float, Text: fmt.Sprintf("%v", literal) }, true
+			return &common.BasicLit{Type: scanner.Float, Text: fmt.Sprintf("%v", literal)}, true
 		}
 	}
 	return nil, false
