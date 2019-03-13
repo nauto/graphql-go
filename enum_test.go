@@ -174,7 +174,7 @@ func TestInvalidEnum(t *testing.T) {
 			query($justso: String!) {
 				crash(why: $justso)
 			}`,
-			Variables: map[string]interface{}{"justso": ""},
+			Variables:      map[string]interface{}{"justso": ""},
 			ExpectedResult: `{ "crash": "When, !" }`,
 		},
 	})
