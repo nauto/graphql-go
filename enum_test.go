@@ -113,6 +113,30 @@ func TestInvalidEnum(t *testing.T) {
 			Variables: map[string]interface{}{ "wrong": `[WRUNG]` },
 			ExpectedResult: `{ "leave": "Bye, [WRUNG]!" }`,
 		},
+		{
+			// 9. misspelled again scalar enum literal
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
+			query {
+				greet(mood: WRU)
+			}`,
+			ExpectedErrors: []*qerrors.QueryError{{
+				Message: "Argument \"mood\" has invalid value WRU.\nExpected type \"Mood\", found WRU.",
+				Locations: []qerrors.Location{{Line: 3, Column: 17}},
+				Rule: "ArgumentsOfCorrectType",
+			}},
+		},
+		{
+			// 10. misspelled again scalar enum variable
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: varScalar,
+			Variables: map[string]interface{}{ "wrong": "WRU" },
+			ExpectedErrors: []*qerrors.QueryError{{
+				Message: "Expected type \"Mood\", found WRU.",
+				Locations: []qerrors.Location{{Line: 2, Column: 8}, {Line: 3, Column: 15}},
+				Rule: "ArgumentsOfCorrectType",
+			}},
+		},
 	})
 }
 

@@ -707,16 +707,29 @@ func parseLiteral(value string) common.Literal {
 	return common.ParseLiteral(lexer, false)
 }
 
-func varBinding(c *opContext, name string) (common.Literal, bool) {
+func varBinding(c *opContext, name string) (rv common.Literal, success bool) {
 	if binding, ok := c.variables[name]; ok {
 		if literal, ok := binding.(common.Literal); ok {
 			return literal, true
 		}
+
+		defer func() {
+			if ex := recover(); ex != nil {
+				// ParseLiteral panicked
+				rv = nil
+				success = false
+			}
+		}()
+
 		switch literal := binding.(type) {
 		case string:
 			return parseLiteral(literal), true
 		case []byte:
 			return parseLiteral(string(literal)), true
+		case uint8, uint16, uint32, uint64, int8, int16, int32, int64:
+			return &common.BasicLit{ Type: scanner.Int, Text: fmt.Sprintf("%v", literal) }, true
+		case float32, float64:
+			return &common.BasicLit{ Type: scanner.Float, Text: fmt.Sprintf("%v", literal) }, true
 		}
 	}
 	return nil, false
