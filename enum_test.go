@@ -175,7 +175,7 @@ func TestInvalidEnum(t *testing.T) {
 				crash(why: $justso)
 			}`,
 			Variables:      map[string]interface{}{"justso": ""},
-			ExpectedResult: `{ "crash": "When, !" }`,
+			ExpectedResult: `{ "crash": "Why, !" }`,
 		},
 	})
 }
