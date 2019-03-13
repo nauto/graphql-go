@@ -23,6 +23,10 @@ func (self *enumResolver) Leave(args struct{ Moods *[]*string }) string {
 	return retVal + "!"
 }
 
+func (self *enumResolver) Grasp(args struct{ None *string }) string {
+	return fmt.Sprintf("None, %s.", *args.None)
+}
+
 func TestInvalidEnum(t *testing.T) {
 	varScalar := `
 	query($wrong: Mood!) {
@@ -137,6 +141,19 @@ func TestInvalidEnum(t *testing.T) {
 				Rule:      "ArgumentsOfCorrectType",
 			}},
 		},
+		{
+			// 11. spelled empty enum literal
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
+			query {
+				grasp(none: NOTHING)
+			}`,
+			ExpectedErrors: []*qerrors.QueryError{{
+				Message:   "Argument \"none\" has invalid value NOTHING.\nExpected type \"Nothing\", found NOTHING.",
+				Locations: []qerrors.Location{{Line: 3, Column: 17}},
+				Rule:      "ArgumentsOfCorrectType",
+			}},
+		},
 	})
 }
 
@@ -150,8 +167,12 @@ const rightSchema = `
 		WRUNG
 	}
 
+	enum Nothing {
+	}
+
 	type Query {
 		greet(mood: Mood!): String!
 		leave(moods: [Mood]): String!
+		grasp(none: Nothing): String!
 	}
 `
