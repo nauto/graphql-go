@@ -177,6 +177,16 @@ func TestInvalidEnum(t *testing.T) {
 			Variables:      map[string]interface{}{"justso": ""},
 			ExpectedResult: `{ "crash": "Why, !" }`,
 		},
+		{
+			// 14. an arbitrary string
+			Schema: graphql.MustParseSchema(rightSchema, &enumResolver{}),
+			Query: `
+			query($justso: String!) {
+				crash(why: $justso)
+			}`,
+			Variables:      map[string]interface{}{"justso": "!hola"},
+			ExpectedResult: `{ "crash": "Why, !hola!" }`,
+		},
 	})
 }
 

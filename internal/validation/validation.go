@@ -706,7 +706,7 @@ func stringLiteral(value string) common.Literal {
 	return &common.BasicLit{Type: scanner.String, Text: value}
 }
 
-func parseWhole(value string) common.Literal {
+func parseWhole(value string) (rv common.Literal) {
 	if value == "" {
 		return stringLiteral("")
 	}
@@ -715,12 +715,19 @@ func parseWhole(value string) common.Literal {
 		// assuming values of other scalar types don't start with spaces
 		return stringLiteral(value)
 	}
-	rv := common.ParseLiteral(lexer, true)
+
+	defer func() {
+		if ex := recover(); rv == nil || ex != nil {
+			rv = stringLiteral(value)
+		}
+	}()
+
+	rv = common.ParseLiteral(lexer, true)
 	if lexer.Peek() != scanner.EOF {
 		// if it can be parsed as several simple values it is assumed to be a string
-		return stringLiteral(value)
+		rv = nil
 	}
-	return rv
+	return
 }
 
 func varBinding(c *opContext, name string) (rv common.Literal, success bool) {
