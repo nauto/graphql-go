@@ -711,23 +711,15 @@ func parseWhole(value string) (rv common.Literal) {
 		return stringLiteral("")
 	}
 	lexer := common.NewLexer(value, false)
-	if unicode.IsSpace(lexer.Advance()) {
-		// assuming values of other scalar types don't start with spaces
-		return stringLiteral(value)
-	}
-
-	defer func() {
-		if ex := recover(); rv == nil || ex != nil {
-			rv = stringLiteral(value)
+	if !unicode.IsSpace(lexer.Advance()) {
+		// assuming values of non-string types types don't start with spaces
+		err := lexer.CatchSyntaxError(func() { rv = common.ParseLiteral(lexer, true) })
+		if err == nil && lexer.Peek() == scanner.EOF {
+			// this whole string can be consumed as a single GraphQL literal
+			return
 		}
-	}()
-
-	rv = common.ParseLiteral(lexer, true)
-	if lexer.Peek() != scanner.EOF {
-		// if it can be parsed as several simple values it is assumed to be a string
-		rv = nil
 	}
-	return
+	return stringLiteral(value)
 }
 
 func varBinding(c *opContext, name string) (rv common.Literal, success bool) {
