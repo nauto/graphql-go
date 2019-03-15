@@ -722,7 +722,7 @@ func parseWhole(value string) (rv common.Literal) {
 	return stringLiteral(value)
 }
 
-func varBinding(c *opContext, name string) (rv common.Literal, success bool) {
+func varBinding(c *opContext, name string) (common.Literal, bool) {
 	if binding, ok := c.variables[name]; ok {
 		if literal, ok := binding.(common.Literal); ok {
 			return literal, true
