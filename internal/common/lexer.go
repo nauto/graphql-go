@@ -52,6 +52,17 @@ func (l *Lexer) Peek() rune {
 	return l.next
 }
 
+// Advance reads, and returns, next character from the stream and makes it observable via Peek() no matter what that character is.
+//
+// Consequently, any leading whitespace is not skipped.
+func (l *Lexer) Advance() rune {
+	if !l.useStringDescriptions {
+		l.descComment = ""
+	}
+	l.next = l.sc.Scan()
+	return l.next
+}
+
 // ConsumeWhitespace consumes whitespace and tokens equivalent to whitespace (e.g. commas and comments).
 //
 // Consumed comment characters will build the description for the next type or field encountered.

@@ -435,7 +435,7 @@ func TestMaxDepthValidation(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			context := newContext(s, doc, tc.maxDepth)
+			context := newContext(s, doc, tc.maxDepth, nil)
 			op := doc.Operations[0]
 
 			opc := &opContext{context: context, ops: doc.Operations}

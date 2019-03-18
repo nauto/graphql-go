@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"text/scanner"
+	"unicode"
 
 	"github.com/nauto/graphql-go/errors"
 	"github.com/nauto/graphql-go/internal/common"
@@ -701,10 +702,24 @@ func validateLiteral(c *opContext, l common.Literal) {
 	}
 }
 
-func parseLiteral(value string) common.Literal {
+func stringLiteral(value string) common.Literal {
+	return &common.BasicLit{Type: scanner.String, Text: value}
+}
+
+func parseWhole(value string) (rv common.Literal) {
+	if value == "" {
+		return stringLiteral("")
+	}
 	lexer := common.NewLexer(value, false)
-	lexer.ConsumeWhitespace()
-	return common.ParseLiteral(lexer, false)
+	if !unicode.IsSpace(lexer.Advance()) {
+		// assuming values of non-string types types don't start with spaces
+		err := lexer.CatchSyntaxError(func() { rv = common.ParseLiteral(lexer, true) })
+		if err == nil && lexer.Peek() == scanner.EOF {
+			// this whole string can be consumed as a single GraphQL literal
+			return
+		}
+	}
+	return stringLiteral(value)
 }
 
 func varBinding(c *opContext, name string) (common.Literal, bool) {
@@ -712,11 +727,16 @@ func varBinding(c *opContext, name string) (common.Literal, bool) {
 		if literal, ok := binding.(common.Literal); ok {
 			return literal, true
 		}
+
 		switch literal := binding.(type) {
 		case string:
-			return parseLiteral(literal), true
+			return parseWhole(literal), true
 		case []byte:
-			return parseLiteral(string(literal)), true
+			return parseWhole(string(literal)), true
+		case uint8, uint16, uint32, uint64, int8, int16, int32, int64:
+			return &common.BasicLit{Type: scanner.Int, Text: fmt.Sprintf("%v", literal)}, true
+		case float32, float64:
+			return &common.BasicLit{Type: scanner.Float, Text: fmt.Sprintf("%v", literal)}, true
 		}
 	}
 	return nil, false
