@@ -1,6 +1,6 @@
 module github.com/nauto/graphql-go
 
-go 1.24.2
+go 1.24
 
 require (
 	github.com/opentracing/opentracing-go v1.0.2
