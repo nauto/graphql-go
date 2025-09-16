@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/nauto/graphql-go/errors"
 	"github.com/nauto/graphql-go/internal/common"
@@ -17,6 +18,7 @@ import (
 	"github.com/nauto/graphql-go/log"
 	pubselected "github.com/nauto/graphql-go/selected"
 	"github.com/nauto/graphql-go/trace"
+	"github.com/sirupsen/logrus"
 )
 
 type Request struct {
@@ -73,22 +75,39 @@ func (r *Request) execSelections(ctx context.Context, sels []selected.Selection,
 	var fields []*fieldToExec
 	collectFieldsToResolve(sels, resolver, &fields, make(map[string]*fieldToExec))
 
+	requestID, _ := ctx.Value("request_id").(string)
+	logger := logrus.WithFields(logrus.Fields{"request_id": requestID})
+
+	logger.Infof("GQL lib: %d fields to reolve, async: %v", len(fields), async)
+
 	if async {
 		var wg sync.WaitGroup
 		wg.Add(len(fields))
 		for _, f := range fields {
 			go func(f *fieldToExec) {
+				start := time.Now()
+				logger.Infof("GQL lib: field to resolve: %s", f.field.Alias)
+
 				defer wg.Done()
 				defer r.handlePanic(ctx)
 				f.out = new(bytes.Buffer)
 				execFieldSelection(ctx, r, f, &pathSegment{path, f.field.Alias}, true)
+
+				elapsed := time.Since(start).Milliseconds()
+				logger.Infof("GQL lib: field resolved: %s, took %v ms", f.field.Alias, elapsed)
 			}(f)
 		}
 		wg.Wait()
 	} else {
 		for _, f := range fields {
+			start := time.Now()
+
+			logger.Infof("GQL lib: field to resolve: %s", f.field.Alias)
 			f.out = new(bytes.Buffer)
 			execFieldSelection(ctx, r, f, &pathSegment{path, f.field.Alias}, true)
+
+			elapsed := time.Since(start).Milliseconds()
+			logger.Infof("GQL lib: field resolved: %s, took %v ms", f.field.Alias, elapsed)
 		}
 	}
 
